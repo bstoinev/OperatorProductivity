@@ -1,0 +1,46 @@
+﻿Magic strings
+	Use configuration instead of hardcoded connection strings. [FIXED]
+
+Memory leak - improper usage of disposable objects. [FIXED]
+	
+DataReader misuse [FIXED]
+	In order to execute subsequent commands against a connection, a DataReader must be closed.
+	Whilst this is not an issue in the OperatorReport action method, closure of the SqlDataReader shows that the routine is developed conciously and in full.
+	
+No views for all the action methods [FIXED]
+
+No error handling [FIXED]
+	SQL Server might be innaccessible. Show user friendly message instead of YSOD.
+
+No logging.
+	Ease the diagnostics of future problems by adding logging capabilities.
+
+Reading data 
+	Performance gain might be obtained using the DataReader's Get* methods, instead of Convert.To* methods. [FIXED]
+
+Wrong data type
+	TotalChatLength and AverageChatLength properties are numbers as opposed to strings [FIXED]
+	
+Complexity overhead
+	Unless some specific behavior is necessary in a collection, don't create ClassCollection (OperatorReportItems) as it brings more complexity to the project.
+	Instead do use generics as in List<OperatorReportViewModel>
+
+Multiple classes in a single file.
+	Having this in a small project is fine. 
+	But when source control system is involved you might want to have one class per file, which is identically named.
+	Also, it's easier to force this simple rule in a team, instead of requiring developers to follow some logic for grouping of classes.
+
+Decreased readability of the OperatorProductivity stored procedure
+	Use of Common Table Expressions instead of subqueries greatly improves the readability of the SP's code. 
+
+Offload the DB engine
+	The database is likely the most heavily loaded component of a system. 
+	So calculating scalars doesn't make much sense as it consumes system resources and increases the payload sent over the wire.
+	I recommend removal of the rate fields from the returned data. See OperatorProductivityRaw stored procedure.
+	Next, the application could do the calculations during the population of the view model.
+
+Conceptual error
+	Operator report view model is not the same as a single row in the operator report table. 
+	So OperatorReportViewModel is implemented wrong. 
+	Instead, it must contains an enumerable of operator report rows as well as the properties for filtering the data.
+	See OperatorReportItem, OperatorReportViewModelRef for details.

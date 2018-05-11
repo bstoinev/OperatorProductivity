@@ -1,0 +1,190 @@
+﻿@using Powerfront.BackendTest.Models
+
+@model OperatorReportViewModelRef
+
+@{
+    ViewBag.Title = "Operator Report";
+
+    Func<int, string> formatDuration = seconds =>
+    {
+        var result = "0s";
+
+        var ts = TimeSpan.FromSeconds(seconds);
+
+        var units = new Dictionary<char, int>(4)
+        {
+    { 'd', ts.Days },
+    { 'h', ts.Hours },
+    { 'm', ts.Minutes},
+    { 's', ts.Seconds }
+        };
+
+        var calculated = units
+            .SkipWhile(u => u.Value == 0)
+            .Aggregate(string.Empty, (c, n) => c += $"{n.Value}{n.Key} ");
+
+        if (!string.IsNullOrEmpty(calculated))
+        {
+            result = calculated.TrimEnd();
+        }
+
+        return result;
+    };
+
+    var deviceListItems = new List<SelectListItem>
+{
+new SelectListItem { Text = "[ Any ]", Value = "Any", Selected = true }
+};
+
+    deviceListItems.AddRange(Model.DeviceList.Select(d => new SelectListItem { Text = d, Value = d }));
+
+    var websiteListItems = new List<SelectListItem>
+{
+new SelectListItem { Text = "[ Any ]", Value = "Any", Selected = true }
+};
+
+    websiteListItems.AddRange(Model.WebsiteList.Select(w => new SelectListItem { Text = w, Value = w }));
+
+    var predefinedPeriodListItems = new List<SelectListItem>
+{
+new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
+};
+
+    predefinedPeriodListItems.AddRange(Model.PredefinedDateFilter.Select(p => new SelectListItem { Text = p, Value = p }));
+}
+
+<style>
+    table {
+
+    }
+
+        table th {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        table td {
+            text-align: right;
+        }
+
+        table td:nth-child(2) {
+            text-align: left
+        }
+</style>
+
+<h2>Operator Report</h2>
+
+<div class="row">
+    <div class="col-2">
+        <div id="predefinedPeriodFilterRadio" class="radio">
+            <label>
+                @Html.RadioButton("PeriodFilterType", "pre-defined", true)
+                Pre-defined
+            </label>
+        </div>
+
+        <div id="customPeriodFilterRadio" class="radio">
+            <label>
+                @Html.RadioButton("PeriodFilterType", "custom")
+                Custom
+            </label>
+        </div>
+    </div>
+
+    <div class="col-3">
+        <div id="predefinedPeriodHandles">
+            @Html.DropDownListFor(m => m.PredefinedDateFilter, predefinedPeriodListItems, new { @class = "form-control" })
+        </div>
+
+        <div id="customPeriodHandles" class="hidden">
+            @Html.TextBoxFor(m => m.StartDate, new { @class = "form-control", placeholder = "Start Date" })
+            <br />
+            @Html.TextBoxFor(m => m.EndDate, new { @class = "form-control", placeholder = "End Date" })
+        </div>
+    </div>
+
+    <div class="col-2 text-right">
+        <label class="col-form-label">
+            Device
+        </label>
+
+        <br />
+        <br />
+        <label class="col-form-label">
+            Website
+        </label>
+    </div>
+
+    <div class="col-3">
+        @Html.DropDownListFor(m => m.DeviceList, deviceListItems, new { @class = "form-control" })
+        <br />
+        @Html.DropDownListFor(m => m.WebsiteList, websiteListItems, new { @class = "form-control" })
+    </div>
+    </div>
+
+
+
+
+    <br />
+
+    <br />
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th rowspan="2">S.No.</th>
+                <th rowspan="2">Operator Name</th>
+                <th colspan="3">Proactive</th>
+                <th colspan="3">Reactive</th>
+                <th colspan="2">Chat duration</th>
+            </tr>
+
+            <tr>
+                <th>Sent</th>
+                <th>Answered</th>
+                <th>Rate [%]</th>
+                <th>Received</th>
+                <th>Answered</th>
+                <th>Rate [%]</th>
+                <th>Total</th>
+                <th>Average</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Rows)
+            {
+                <tr>
+                    <td>@item.ID</td>
+                    <td>@item.Name</td>
+                    <td>@item.ProactiveSent</td>
+                    <td>@item.ProactiveAnswered</td>
+                    <td>@item.ProactiveResponseRate</td>
+                    <td>@item.ReactiveReceived</td>
+                    <td>@item.ReactiveAnswered</td>
+                    <td>@item.ReactiveResponseRate</td>
+                    <td>@formatDuration(item.TotalChatLengthSeconds)</td>
+                    <td>@formatDuration(item.AverageChatLengthSeconds)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+@section Scripts {
+    <script>
+        $(".radio").on("click", PeriodMaskRadio_Click);
+
+        function PeriodMaskRadio_Click(e) {
+            var sender = $(e.target).closest("div");
+
+            if (sender.is(predefinedPeriodFilterRadio)) {
+                $(customPeriodHandles).addClass("invisible");
+                $(predefinedPeriodHandles).removeClass("invisible");
+            }
+            else if (sender.is(customPeriodFilterRadio)) {
+                $(predefinedPeriodHandles).addClass("invisible");
+                $(customPeriodHandles).removeClass("invisible");
+            }
+        }
+    </script>
+
+}
