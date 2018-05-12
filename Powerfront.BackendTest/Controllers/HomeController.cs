@@ -1,4 +1,5 @@
-﻿using OperatorReport.Models;
+﻿using Newtonsoft.Json;
+using OperatorReport.Models;
 using Powerfront.BackendTest;
 using Powerfront.BackendTest.Models;
 using System;
@@ -111,16 +112,21 @@ namespace OperatorReport.Controllers
         [HttpGet]
         public ActionResult OperatorReport()
         {
-            ActionResult result = null;
-
             var model = new OperatorReportViewModelRef();
 
             ViewBag.Message = "Operator Productivity Report";
 
+            return View(model);
+        }
+
+        public ActionResult OperatorProductivityTable(ProductivityReportCriteria filter)
+        {
+            ActionResult result = null;
+
             try
             {
-                model.Rows = LoadReport(new ProductivityReportCriteria());
-                result = View(model);
+                var model = LoadReport(new ProductivityReportCriteria());
+                result = PartialView("_ProductivityReportTable", model);
             }
             catch (SqlException se)
             {
@@ -133,10 +139,10 @@ namespace OperatorReport.Controllers
                 result = new HttpStatusCodeResult(500, "The report cannot be generated. Try again later.");
             }
 
-            return result;
+            return Json(result);
         }
 
-        public ActionResult OperatorProductivityData()
+        public ActionResult ProductivityReport()
         {
             return View();
         }

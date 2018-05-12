@@ -1,0 +1,86 @@
+﻿@model IEnumerable<Powerfront.BackendTest.OperatorReportItem>
+
+@{ 
+    Func<int, string> formatDuration = seconds =>
+    {
+        var result = "0s";
+
+        var ts = TimeSpan.FromSeconds(seconds);
+
+        var units = new Dictionary<char, int>(4)
+        {
+            { 'd', ts.Days },
+            { 'h', ts.Hours },
+            { 'm', ts.Minutes},
+            { 's', ts.Seconds }
+        };
+
+        var calculated = units
+            .SkipWhile(u => u.Value == 0)
+            .Aggregate(string.Empty, (c, n) => c += $"{n.Value}{n.Key} ");
+
+        if (!string.IsNullOrEmpty(calculated))
+        {
+            result = calculated.TrimEnd();
+        }
+
+        return result;
+    };
+}
+<style>
+    table {
+    }
+
+        table th {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        table td {
+            text-align: right;
+        }
+
+            table td:nth-child(2) {
+                text-align: left
+            }
+</style>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th rowspan="2">S.No.</th>
+            <th rowspan="2">Operator Name</th>
+            <th colspan="3">Proactive</th>
+            <th colspan="3">Reactive</th>
+            <th colspan="2">Chat duration</th>
+        </tr>
+
+        <tr>
+            <th>Sent</th>
+            <th>Answered</th>
+            <th>Rate [%]</th>
+            <th>Received</th>
+            <th>Answered</th>
+            <th>Rate [%]</th>
+            <th>Total</th>
+            <th>Average</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.ID</td>
+                <td>@item.Name</td>
+                <td>@item.ProactiveSent</td>
+                <td>@item.ProactiveAnswered</td>
+                <td>@item.ProactiveResponseRate</td>
+                <td>@item.ReactiveReceived</td>
+                <td>@item.ReactiveAnswered</td>
+                <td>@item.ReactiveResponseRate</td>
+                <td>@formatDuration(item.TotalChatLengthSeconds)</td>
+                <td>@formatDuration(item.AverageChatLengthSeconds)</td>
+            </tr>
+        }
+    </tbody>
+</table>

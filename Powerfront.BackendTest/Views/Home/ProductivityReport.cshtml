@@ -1,6 +1,5 @@
-﻿@using Powerfront.BackendTest.Models
+﻿@model Powerfront.BackendTest.Models.OperatorReportViewModelRef
 
-@model OperatorReportViewModelRef
 
 @{
     ViewBag.Title = "Operator Report";
@@ -24,12 +23,10 @@ new SelectListItem { Text = "[ Any ]", Value = "Any", Selected = true }
 new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
 };
 
-    predefinedPeriodListItems.AddRange(Model.PredefinedDateFilter.Select(kvp => new SelectListItem { Text = kvp.Value, Value = kvp.Value }));
+    predefinedPeriodListItems.AddRange(Model.PredefinedDateFilter.Select(p => new SelectListItem { Text = p, Value = p }));
 }
 
-<link href="~/Content/bootstrap-datepicker3.css" rel="stylesheet" />
-
-<h2>Operator Report</h2>
+<h2>Productivity Report (SPA)</h2>
 
 <div class="row">
     <div class="col-2">
@@ -50,15 +47,13 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
 
     <div class="col-3">
         <div id="predefinedPeriodHandles">
-            @Html.DropDownListFor(m => m.PredefinedDateFilter, predefinedPeriodListItems, new { id = "periodMaskDropDown", @class = "form-control" })
+            @Html.DropDownListFor(m => m.PredefinedDateFilter, predefinedPeriodListItems, new { @class = "form-control" })
         </div>
 
         <div id="customPeriodHandles" class="d-none">
             @Html.TextBoxFor(m => m.StartDate, new { id = "startDateInput", @class = "form-control", placeholder = "Start Date" })
             <br />
-            @Html.TextBoxFor(m => m.EndDate, new { id="endDateInput", @class = "form-control", placeholder = "End Date" })
-            <br />
-            <button id="applyPeriodButton" type="button" class="btn btn-secondary">Apply</button>
+            @Html.TextBoxFor(m => m.EndDate, new { id = "endDateInput", @class = "form-control", placeholder = "End Date" })
         </div>
     </div>
 
@@ -75,20 +70,50 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
     </div>
 
     <div class="col-3">
-        @Html.DropDownListFor(m => m.DeviceList, deviceListItems, new { id = "deviceDropDown", @class = "form-control" })
+        @Html.DropDownListFor(m => m.DeviceList, deviceListItems, new { @class = "form-control" })
         <br />
-        @Html.DropDownListFor(m => m.WebsiteList, websiteListItems, new { id = "websiteDropDown", @class = "form-control" })
+        @Html.DropDownListFor(m => m.WebsiteList, websiteListItems, new { @class = "form-control" })
     </div>
 </div>
 
-<br />
 
-<br />
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th rowspan="2">S.No.</th>
+            <th rowspan="2">Operator Name</th>
+            <th colspan="3">Proactive</th>
+            <th colspan="3">Reactive</th>
+            <th colspan="2">Chat duration</th>
+        </tr>
 
-@if (Model.Rows != null  && Model.Rows.Count() > 0)
-{
-    Html.Partial("_ProductivityReportTable", Model.Rows);
-}
+        <tr>
+            <th>Sent</th>
+            <th>Answered</th>
+            <th>Rate [%]</th>
+            <th>Received</th>
+            <th>Answered</th>
+            <th>Rate [%]</th>
+            <th>Total</th>
+            <th>Average</th>
+        </tr>
+    </thead>
+    <tbody data-bind="foreach: Rows">
+        <tr>
+            <td data-bind="text: ID"></td>
+            <td data-bind="text: Name"></td>
+            <td data-bind="text: ProactiveSent"></td>
+            <td data-bind="text: ProactiveAnswered"></td>
+            <td data-bind="text: ProactiveResponseRate"></td>
+            <td data-bind="text: ReactiveReceived"></td>
+            <td data-bind="text: ReactiveAnswered"></td>
+            <td data-bind="text: ReactiveResponseRate"></td>
+            <td data-bind="text: TotalChatLengthSeconds"></td>
+            <td data-bind="text: AverageChatLenghtSeconds"></td>
+        </tr>
+    </tbody>
+</table>
+
 
 @section Scripts {
     <script src="~/Scripts/bootstrap-datepicker.min.js"></script>
@@ -98,33 +123,38 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
 
         function ApplyFilter() {
             var payload = {
-                Device: $(deviceDropDown).val(),
-                EndDate: $(endDateInput).val(),
-                StartDate: $(startDateInput),
-                Website: $(websiteList).val()
+                Device: $()
             };
-
-            debugger;
-
-            if ($("input:radio['PeriodFilterType']")) {
-                var ma = $(periodMaskDropDown).val().split("/");
-
-                ma.lenght > 0 || (payload.StartDate = new Date(parseInt(ma[0])));
-                ma.lenght > 1 || (payload.EndDate = new Date(parseInt(ma[1])));
-            }
 
             settings.type = "POST";
             settings.contentType = "application/json";
             settings.url = "/home/OperatorProductivityData";
             settings.data = JSON.stringify(payload);
             settings.success = function (response) {
-                $("tbody").html(response);
+                containerElement.html(response);
             };
             settings.error = function (response) {
-                $("tbody").html("<tr><td>Error occured!</td></tr>");
+                dpr.ShowMessage({
+                    content: '<span class="notify-text">' + response.responseText + '</span>',
+                    type: "alert",
+                    timeout: 10000
+                });
+
+                containerElement.html(response.responseText);
+            };
+            settings.complete = function (response) {
+                var to = containerElement.data("timeout");
+                if (to) {
+                    clearTimeout(to);
+                }
+
+                if (onComplete) {
+                    onComplete(response);
+                }
             };
 
             $.ajax(settings);
+
         }
 
         function Document_Ready(e) {
@@ -139,11 +169,6 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
 
             $(startDateInput).datepicker(calendarDefaults);
             $(endDateInput).datepicker(calendarDefaults);
-
-            $(deviceDropDown).on("change", ApplyFilter);
-            $(websiteDropDown).on("change", ApplyFilter);
-            $(endDateInput).on("change", ApplyFilter);
-            $(applyPeriodButton).on("change", ApplyFilter);
         }
 
         function PeriodMaskRadio_Click(e) {

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.Linq;
 using System.Web;
 
@@ -11,6 +12,7 @@ namespace Powerfront.BackendTest.Models
 {
     public class OperatorReportViewModelRef
     {
+        // TODO: Use MemoryCache or more advanced caching mechanism.
         private static List<string> DeviceCache = new List<string>();
         private static List<string> WebsiteCache = new List<string>();
 
@@ -53,18 +55,27 @@ namespace Powerfront.BackendTest.Models
 
         public OperatorReportViewModelRef()
         {
+            var unixEpoch = new DateTime(1970, 1, 1);
+
+            var weekStart = DateTime.Today.AddDays(
+              (int)CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek - (int)DateTime.Today.DayOfWeek);
+
+            var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+            var yearStart = new DateTime(DateTime.Now.Year, 1, 1);
+
             DeviceList = DeviceCache;
 
-            PredefinedDateFilter = new string[]
+            PredefinedDateFilter = new Dictionary<string, string>
             {
-                "Today",
-                "Yesterday",
-                "This Week",
-                "Last Week",
-                "This Month",
-                "Last Month",
-                "This Year",
-                "Last Year",
+                { "Today", DateTime.Now.Subtract(unixEpoch).TotalMilliseconds.ToString() },
+                { "Yesterday", DateTime.Now.AddDays(-1).Subtract(unixEpoch).TotalMilliseconds.ToString() },
+                { "This Week", $"{weekStart.Subtract(unixEpoch).TotalMilliseconds}/{weekStart.AddDays(7).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "Last Week", $"{weekStart.AddDays(8).Subtract(unixEpoch).TotalMilliseconds }/{weekStart.AddDays(-1).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "This Month", $"{monthStart.Subtract(unixEpoch).TotalMilliseconds}/{monthStart.AddDays(DateTime.DaysInMonth(monthStart.Year, monthStart.Month)).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "Last Month", $"{monthStart.AddMonths(-1).Subtract(unixEpoch).TotalMilliseconds}/{monthStart.AddMonths(-1).AddDays(DateTime.DaysInMonth(monthStart.AddMonths(-1).Year, monthStart.AddMonths(-1).Month)).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "This Year" , $"{yearStart.Subtract(unixEpoch).TotalMilliseconds}/{yearStart.AddMonths(12).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "Last Year", $"{yearStart.AddYears(-1).Subtract(unixEpoch).TotalMilliseconds}/{yearStart.AddYears(-1).AddMonths(12).Subtract(unixEpoch).TotalMilliseconds}" }
             };
 
             WebsiteList = WebsiteCache;
@@ -80,7 +91,7 @@ namespace Powerfront.BackendTest.Models
         public PeriodFilterForm PeriodForm { get; set; }
 
         [Display(Name = "Quick period filter")]
-        public IEnumerable<string> PredefinedDateFilter { get; set; }
+        public Dictionary<string, string> PredefinedDateFilter { get; set; }
 
         public IEnumerable<OperatorReportItem> Rows { get; set; }
 

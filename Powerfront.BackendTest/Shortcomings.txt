@@ -44,3 +44,6 @@ Conceptual error
 	So OperatorReportViewModel is implemented wrong. 
 	Instead, it must contains an enumerable of operator report rows as well as the properties for filtering the data.
 	See OperatorReportItem, OperatorReportViewModelRef for details.
+
+UI improvment
+	Change the drop-down lists to checkbox lists to allow slection of one or more but not all of the options.
