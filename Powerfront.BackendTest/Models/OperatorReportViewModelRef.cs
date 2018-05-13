@@ -68,8 +68,8 @@ namespace Powerfront.BackendTest.Models
 
             PredefinedDateFilter = new Dictionary<string, string>
             {
-                { "Today", DateTime.Now.Subtract(unixEpoch).TotalMilliseconds.ToString() },
-                { "Yesterday", DateTime.Now.AddDays(-1).Subtract(unixEpoch).TotalMilliseconds.ToString() },
+                { "Today", DateTime.Today.Subtract(unixEpoch).TotalMilliseconds.ToString() },
+                { "Yesterday", DateTime.Today.AddDays(-1).Subtract(unixEpoch).TotalMilliseconds.ToString() },
                 { "This Week", $"{weekStart.Subtract(unixEpoch).TotalMilliseconds}/{weekStart.AddDays(7).Subtract(unixEpoch).TotalMilliseconds}" },
                 { "Last Week", $"{weekStart.AddDays(8).Subtract(unixEpoch).TotalMilliseconds }/{weekStart.AddDays(-1).Subtract(unixEpoch).TotalMilliseconds}" },
                 { "This Month", $"{monthStart.Subtract(unixEpoch).TotalMilliseconds}/{monthStart.AddDays(DateTime.DaysInMonth(monthStart.Year, monthStart.Month)).Subtract(unixEpoch).TotalMilliseconds}" },

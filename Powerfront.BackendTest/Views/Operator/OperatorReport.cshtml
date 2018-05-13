@@ -24,7 +24,7 @@ new SelectListItem { Text = "[ Any ]", Value = "Any", Selected = true }
 new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
 };
 
-    predefinedPeriodListItems.AddRange(Model.PredefinedDateFilter.Select(kvp => new SelectListItem { Text = kvp.Value, Value = kvp.Value }));
+    predefinedPeriodListItems.AddRange(Model.PredefinedDateFilter.Select(kvp => new SelectListItem { Text = kvp.Key, Value = kvp.Value }));
 }
 
 <link href="~/Content/bootstrap-datepicker3.css" rel="stylesheet" />
@@ -54,11 +54,16 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
         </div>
 
         <div id="customPeriodHandles" class="d-none">
-            @Html.TextBoxFor(m => m.StartDate, new { id = "startDateInput", @class = "form-control", placeholder = "Start Date" })
-            <br />
-            @Html.TextBoxFor(m => m.EndDate, new { id="endDateInput", @class = "form-control", placeholder = "End Date" })
-            <br />
-            <button id="applyPeriodButton" type="button" class="btn btn-secondary">Apply</button>
+            <div class="row">
+                <div class="col-8">
+                    @Html.TextBoxFor(m => m.StartDate, new { id = "startDateInput", @class = "form-control", placeholder = "Start Date" })
+                    <br />
+                    @Html.TextBoxFor(m => m.EndDate, new { id = "endDateInput", @class = "form-control", placeholder = "End Date" })
+                </div>
+                <div class="col-4">
+                    <button id="applyPeriodButton" type="button" class="btn btn-secondary">Apply</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -85,10 +90,12 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
 
 <br />
 
-@if (Model.Rows != null  && Model.Rows.Count() > 0)
-{
-    Html.Partial("_ProductivityReportTable", Model.Rows);
-}
+<div id="reportArea">
+    @if (Model.Rows != null && Model.Rows.Count() > 0)
+    {
+        Html.Partial("_ProductivityReportTable", Model.Rows);
+    }
+</div>
 
 @section Scripts {
     <script src="~/Scripts/bootstrap-datepicker.min.js"></script>
@@ -98,30 +105,33 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
 
         function ApplyFilter() {
             var payload = {
-                Device: $(deviceDropDown).val(),
-                EndDate: $(endDateInput).val(),
-                StartDate: $(startDateInput),
-                Website: $(websiteList).val()
+                Device: $(deviceDropDown).val() == "Any" ? null : $(deviceDropDown).val(),
+                EndDate: $(endDateInput).datepicker("getDate"),
+                StartDate: $(startDateInput).datepicker("getDate"),
+                Website: $(websiteDropDown).val() == "Any" ? null : $(websiteDropDown).val()
             };
 
-            debugger;
-
-            if ($("input:radio['PeriodFilterType']")) {
+            if ($("input[name=PeriodFilterType]:checked").val() === "pre-defined") {
                 var ma = $(periodMaskDropDown).val().split("/");
 
                 ma.lenght > 0 || (payload.StartDate = new Date(parseInt(ma[0])));
                 ma.lenght > 1 || (payload.EndDate = new Date(parseInt(ma[1])));
             }
 
-            settings.type = "POST";
-            settings.contentType = "application/json";
-            settings.url = "/home/OperatorProductivityData";
-            settings.data = JSON.stringify(payload);
+            var settings = {
+                type: "POST",
+                contentType: "application/json",
+                url: "/home/OperatorProductivityTable",
+                data: JSON.stringify(payload)
+            };
+
             settings.success = function (response) {
-                $("tbody").html(response);
+                debugger;
+                $(reportArea).html(response);
             };
             settings.error = function (response) {
-                $("tbody").html("<tr><td>Error occured!</td></tr>");
+                debugger;
+                $(reportArea).html("<span class='text-danger'>Error occured!</span>");
             };
 
             $.ajax(settings);
@@ -135,15 +145,25 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
                 endDate: new Date(2018, 4, 13)
             };
 
-            $(".radio").on("click", PeriodMaskRadio_Click);
-
             $(startDateInput).datepicker(calendarDefaults);
             $(endDateInput).datepicker(calendarDefaults);
 
+            $(periodMaskDropDown)
+                .children()
+                .filter(function () { return $(this).html() == "Last Month"; })
+                .prop("selected", true)
+            ;
+
+            ApplyFilter();
+
+            $(".radio").on("click", PeriodMaskRadio_Click);
+
             $(deviceDropDown).on("change", ApplyFilter);
+            $(periodMaskDropDown).on("change", ApplyFilter);
             $(websiteDropDown).on("change", ApplyFilter);
-            $(endDateInput).on("change", ApplyFilter);
-            $(applyPeriodButton).on("change", ApplyFilter);
+            $(applyPeriodButton).on("click", ApplyFilter);
+
+
         }
 
         function PeriodMaskRadio_Click(e) {

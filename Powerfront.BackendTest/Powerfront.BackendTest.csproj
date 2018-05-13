@@ -124,12 +124,11 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\DefaultApiController.cs" />
-    <Compile Include="Controllers\OperatorController.cs" />
     <Compile Include="Models\OperatorReportViewModelRef.cs" />
     <Compile Include="OperatorReportItem.cs" />
     <Compile Include="PeriodFilterForm.cs" />
     <Compile Include="ProductivityReportCriteria.cs" />
-    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\OperatorController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -304,10 +303,10 @@
     <Content Include="Scripts\popper.js.map" />
     <Content Include="Scripts\popper-utils.min.js.map" />
     <Content Include="Scripts\popper-utils.js.map" />
-    <Content Include="Views\Home\OperatorReport.cshtml" />
-    <Content Include="Views\Home\ProductivityReport.cshtml" />
-    <Content Include="Views\Home\_ProductivityReportTable.cshtml" />
-    <Content Include="Views\Home\_ProductivityReportFilter.cshtml" />
+    <Content Include="Views\Operator\OperatorReport.cshtml" />
+    <Content Include="Views\Operator\ProductivityReport.cshtml" />
+    <Content Include="Views\Operator\ProductivityReportTable.cshtml" />
+    <Content Include="Views\Operator\_ProductivityReportFilter.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
