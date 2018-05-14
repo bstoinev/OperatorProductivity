@@ -8,9 +8,9 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Web.Mvc;
 
-namespace OperatorReport.Controllers
+namespace Powerfront.BackendTest.Controllers
 {
-    public class HomeController : Controller
+    public class OperatorController : Controller
     {
         private IEnumerable<OperatorReportItem> LoadReport(ProductivityReportCriteria filter)
         {
@@ -89,11 +89,6 @@ namespace OperatorReport.Controllers
             }
 
             return result;
-        }
-
-        public ActionResult Index()
-        {
-            return RedirectToAction(nameof(ProductivityReport));
         }
 
         [HttpGet]
