@@ -1,4 +1,4 @@
-﻿DECLARE @StartDate DATETIME2(7) = NULL
+﻿DECLARE @StartDate DATETIME2(7) = '2010-01-01 00:00:00'
 DECLARE @EndDate DATETIME2(7) = NULL
 DECLARE @WebSite VARCHAR(64) = NULL
 DECLARE @Device VARCHAR(64) = NULL
@@ -7,9 +7,9 @@ WITH cteConversationsFilter AS
 (
 	SELECT * 
 	FROM [Conversation]
-	WHERE (@StartDate IS NULL OR (StartDate >= @StartDate))
-		AND (@EndDate IS NULL OR (EndDate <= @EndDate))
-		AND (@WebSite IS NULL OR (Website = @WebSite))
+	WHERE ((@StartDate IS NULL) OR (StartDate >= @StartDate))
+		AND ((@EndDate IS NULL) OR (EndDate <= @EndDate))
+		AND ((@WebSite IS NULL) OR (Website = @WebSite))
 ),
 cteMessagesFilter AS
 (
@@ -75,7 +75,7 @@ cteMessagesFilter AS
 		COUNT(ofc.ConversationID) AS ReactiveAnswered,
 		SUM(DATEDIFF(SECOND, StartDate, EndDate)) TotalLength,
 		AVG(DATEDIFF(SECOND, StartDate, EndDate)) AS AverageLength
-	FROM [Conversation] c
+	FROM [cteConversationsFilter] c
 		LEFT JOIN cteOperatorProactiveChat cfm ON cfm.ConversationID = c.ConversationID
 		LEFT JOIN cteVisitorFollowedChat vfc ON vfc.ConversationID = c.ConversationID
 		LEFT JOIN cteVisitorProactiveChat vpc ON vpc.ConversationID = c.ConversationID

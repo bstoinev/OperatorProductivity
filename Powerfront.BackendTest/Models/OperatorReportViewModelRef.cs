@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Web;
 
 namespace Powerfront.BackendTest.Models
@@ -58,7 +59,7 @@ namespace Powerfront.BackendTest.Models
             var unixEpoch = new DateTime(1970, 1, 1);
 
             var weekStart = DateTime.Today.AddDays(
-              (int)CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek - (int)DateTime.Today.DayOfWeek);
+              (int)Thread.CurrentThread.CurrentUICulture.DateTimeFormat.FirstDayOfWeek - (int)DateTime.Today.DayOfWeek);
 
             var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 
@@ -70,12 +71,12 @@ namespace Powerfront.BackendTest.Models
             {
                 { "Today", DateTime.Today.Subtract(unixEpoch).TotalMilliseconds.ToString() },
                 { "Yesterday", DateTime.Today.AddDays(-1).Subtract(unixEpoch).TotalMilliseconds.ToString() },
-                { "This Week", $"{weekStart.Subtract(unixEpoch).TotalMilliseconds}/{weekStart.AddDays(7).Subtract(unixEpoch).TotalMilliseconds}" },
-                { "Last Week", $"{weekStart.AddDays(8).Subtract(unixEpoch).TotalMilliseconds }/{weekStart.AddDays(-1).Subtract(unixEpoch).TotalMilliseconds}" },
-                { "This Month", $"{monthStart.Subtract(unixEpoch).TotalMilliseconds}/{monthStart.AddDays(DateTime.DaysInMonth(monthStart.Year, monthStart.Month)).Subtract(unixEpoch).TotalMilliseconds}" },
-                { "Last Month", $"{monthStart.AddMonths(-1).Subtract(unixEpoch).TotalMilliseconds}/{monthStart.AddMonths(-1).AddDays(DateTime.DaysInMonth(monthStart.AddMonths(-1).Year, monthStart.AddMonths(-1).Month)).Subtract(unixEpoch).TotalMilliseconds}" },
-                { "This Year" , $"{yearStart.Subtract(unixEpoch).TotalMilliseconds}/{yearStart.AddMonths(12).Subtract(unixEpoch).TotalMilliseconds}" },
-                { "Last Year", $"{yearStart.AddYears(-1).Subtract(unixEpoch).TotalMilliseconds}/{yearStart.AddYears(-1).AddMonths(12).Subtract(unixEpoch).TotalMilliseconds}" }
+                { "This Week", $"{weekStart.Subtract(unixEpoch).TotalMilliseconds}/{weekStart.AddDays(6).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "Last Week", $"{weekStart.AddDays(-7).Subtract(unixEpoch).TotalMilliseconds }/{weekStart.AddDays(-1).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "This Month", $"{monthStart.Subtract(unixEpoch).TotalMilliseconds}/{monthStart.AddDays(DateTime.DaysInMonth(monthStart.Year, monthStart.Month)).AddDays(-1).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "Last Month", $"{monthStart.AddMonths(-1).Subtract(unixEpoch).TotalMilliseconds}/{monthStart.AddMonths(-1).AddDays(DateTime.DaysInMonth(monthStart.AddMonths(-1).Year, monthStart.AddMonths(-1).Month)).AddDays(-1).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "This Year" , $"{yearStart.Subtract(unixEpoch).TotalMilliseconds}/{yearStart.AddMonths(12).AddDays(-1).Subtract(unixEpoch).TotalMilliseconds}" },
+                { "Last Year", $"{yearStart.AddYears(-1).Subtract(unixEpoch).TotalMilliseconds}/{yearStart.AddYears(-1).AddMonths(12).AddDays(-1).Subtract(unixEpoch).TotalMilliseconds}" }
             };
 
             WebsiteList = WebsiteCache;

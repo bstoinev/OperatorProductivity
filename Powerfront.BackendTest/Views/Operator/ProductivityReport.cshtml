@@ -96,7 +96,15 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
     }
 </div>
 <br />
-<button type="button" role="button" class="btn btn-secondary">CSV Export</button>
+
+@using (Html.BeginForm("ProductivityReportCsv", "Operator", FormMethod.Post, new { id = "exportForm" }))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="filterDump" />
+    <input type="submit" class="btn btn-secondary" value="CSV Export" />
+}
+
+<span id="exportFeedback" class="invisible"></span>
 
 @section Scripts {
     <script src="~/Scripts/bootstrap-datepicker.min.js"></script>
@@ -105,42 +113,43 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
         $(document).ready(Document_Ready);
 
         function ApplyFilter() {
-            var payload = {
-                Device: $(deviceDropDown).val() == "Any" ? null : $(deviceDropDown).val(),
-                EndDate: $(endDateInput).datepicker("getDate"),
-                StartDate: $(startDateInput).datepicker("getDate"),
-                Website: $(websiteDropDown).val() == "Any" ? null : $(websiteDropDown).val()
-            };
+            var payload = PrepareFilter();
 
-            if ($("input[name=PeriodFilterType]:checked").val() === "pre-defined") {
-                var ma = $(periodMaskDropDown).val().split("/");
+            debugger;
 
-                ma.lenght > 0 || (payload.StartDate = new Date(parseInt(ma[0])));
-                ma.lenght > 1 || (payload.EndDate = new Date(parseInt(ma[1])));
+            if (IsValidFilter(payload)) {
+                var settings = {
+                    type: "POST",
+                    contentType: "application/json",
+                    url: "/Operator/ProductivityReportTable",
+                    data: JSON.stringify(payload)
+                };
+
+                settings.success = function (response) {
+                    $(reportArea).html(response);
+                };
+
+                settings.error = function (response) {
+                    $(reportArea).html("<span class='text-danger'>Error occured!</span>");
+                };
+
+                settings.complete = function (response) {
+                    $("body").css("cursor", "default");
+                }
+
+                $("body").css("cursor", "wait");
+                $.ajax(settings);
             }
+        }
 
-            var settings = {
-                type: "POST",
-                contentType: "application/json",
-                url: "/Operator/ProductivityReportTable",
-                data: JSON.stringify(payload)
-            };
+        function CsvExport() {
+            $(exportFeedback).addClass("invisible");
 
-            settings.success = function (response) {
-                debugger;
-                $(reportArea).html(response);
-            };
+            var filter = PrepareFilter();
 
-            settings.error = function (response) {
-                debugger;
-                $(reportArea).html("<span class='text-danger'>Error occured!</span>");
-            };
-
-            settings.complete = function (response) {
-
+            if (IsValidFilter(filter)) {
+                $(exportForm).children("input[name=filterDump]").val(JSON.stringify(filter));
             }
-
-            $.ajax(settings);
         }
 
         function Document_Ready(e) {
@@ -158,7 +167,7 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
                 .children()
                 .filter(function () { return $(this).html() == "Last Month"; })
                 .prop("selected", true)
-                ;
+            ;
 
             ApplyFilter();
 
@@ -168,8 +177,7 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
             $(periodMaskDropDown).on("change", ApplyFilter);
             $(websiteDropDown).on("change", ApplyFilter);
             $(applyPeriodButton).on("click", ApplyFilter);
-
-
+            $(exportForm).submit(CsvExport);
         }
 
         function PeriodMaskRadio_Click(e) {
@@ -183,6 +191,34 @@ new SelectListItem { Text = "[ None ]", Value = "None", Disabled = true }
                 $(predefinedPeriodHandles).addClass("d-none");
                 $(customPeriodHandles).removeClass("d-none");
             }
+        }
+
+        function PrepareFilter() {
+            var result = {
+                Device: $(deviceDropDown).val() == "Any" ? null : $(deviceDropDown).val(),
+                EndDate: $(endDateInput).val().trim() == "" ? null : $(endDateInput).datepicker("getDate"),
+                StartDate: $(startDateInput).val().trim() == "" ? null : $(startDateInput).datepicker("getDate"),
+                Website: $(websiteDropDown).val() == "Any" ? null : $(websiteDropDown).val()
+            };
+
+            if ($("input[name=PeriodFilterType]:checked").val() === "pre-defined") {
+                var ma = $(periodMaskDropDown).val().split("/");
+
+                ma.length > 0 && (result.StartDate = new Date(parseInt(ma[0])));
+                ma.length > 1 && (result.EndDate = new Date(parseInt(ma[1])));
+            }
+
+            return result;
+        }
+
+        function IsValidFilter(filter) {
+            var result = filter.EndDate == null || (filter.EndDate > filter.StartDate);
+
+            if (filter.EndDate && (filter.EndDate < filter.StartDate)) {
+                alert("Invalid period. End Date must be greater than Start Date.");
+            }
+
+            return result;
         }
     </script>
 }

@@ -6,7 +6,11 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.IO;
 using System.Web.Mvc;
+using System.Linq;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace Powerfront.BackendTest.Controllers
 {
@@ -66,22 +70,24 @@ namespace Powerfront.BackendTest.Controllers
                         var reportItem = new OperatorReportItem();
                         reportItem.ID = dr.GetInt32(0);
                         reportItem.Name = dr.GetString(1);
-                        reportItem.ProactiveSent = Convert.IsDBNull(dr[2]) ? 0 : dr.GetInt32(2);
-                        reportItem.ProactiveAnswered = Convert.IsDBNull(dr[3]) ? 0 : dr.GetInt32(3);
+                        reportItem.ProactiveSent = dr.IsDBNull(2) ? 0 : (int)dr[2];
+                        reportItem.ProactiveAnswered = dr.IsDBNull(3) ? 0 : dr.GetInt32(3);
+                        reportItem.ReactiveReceived = dr.IsDBNull(4) ? 0 : dr.GetInt32(4);
+                        reportItem.ReactiveAnswered = dr.IsDBNull(5) ? 0 : dr.GetInt32(5);
+                        reportItem.TotalChatLengthSeconds = dr.IsDBNull(6) ? 0 : dr.GetInt32(6);
+                        reportItem.AverageChatLengthSeconds = dr.IsDBNull(7) ? 0 : dr.GetInt32(7);
 
-                        reportItem.ProactiveResponseRate = reportItem.ProactiveSent == 0
-                            ? 0
-                            : Convert.ToInt32((double)reportItem.ProactiveAnswered / reportItem.ProactiveSent * 100);
+                        if (reportItem.ProactiveSent != 0)
+                        {
+                            reportItem.ProactiveResponseRate = Convert
+                                .ToInt32((double)reportItem.ProactiveAnswered / reportItem.ProactiveSent * 100);
+                        }
 
-                        reportItem.ReactiveReceived = Convert.IsDBNull(dr[4]) ? 0 : dr.GetInt32(4);
-                        reportItem.ReactiveAnswered = Convert.IsDBNull(dr[5]) ? 0 : dr.GetInt32(5);
-
-                        reportItem.ReactiveResponseRate = reportItem.ReactiveReceived == 0
-                            ? 0
-                            : Convert.ToInt32((double)reportItem.ReactiveAnswered / reportItem.ReactiveReceived * 100);
-
-                        reportItem.TotalChatLengthSeconds = Convert.IsDBNull(dr[6]) ? 0 : dr.GetInt32(6);
-                        reportItem.AverageChatLengthSeconds = Convert.IsDBNull(dr[7]) ? 0 : dr.GetInt32(7);
+                        if (reportItem.ReactiveReceived != 0)
+                        {
+                            reportItem.ReactiveResponseRate = Convert
+                                .ToInt32((double)reportItem.ReactiveAnswered / reportItem.ReactiveReceived * 100);
+                        }
 
                         result.Add(reportItem);
                     }
@@ -119,6 +125,46 @@ namespace Powerfront.BackendTest.Controllers
             {
                 Trace.WriteLine($"Failed to load the report, due to exception:{Environment.NewLine}{ex}");
                 result = new HttpStatusCodeResult(500, "The report cannot be generated. Try again later.");
+            }
+
+            return result;
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken()]
+        public ActionResult ProductivityReportCsv(string filterDump)
+        {
+            var filter = JsonConvert.DeserializeObject<ProductivityReportCriteria>(filterDump);
+
+            ActionResult result = null;
+            IEnumerable<OperatorReportItem> data = null;
+
+            try
+            {
+                data = LoadReport(filter);
+            }
+            catch (SqlException se)
+            {
+                Trace.WriteLine($"Failed to open the data store, due to exception:{Environment.NewLine}{se}");
+                result = new HttpStatusCodeResult(400, se.Message);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Failed to load the report, due to exception:{Environment.NewLine}{ex}");
+                result = new HttpStatusCodeResult(500, "The report cannot be generated. Try again later.");
+            }
+
+            if (data != null)
+            {
+                var sb = new StringBuilder();
+
+
+                var lines = $"Operator ID,Name,Proactive Sent,Proactive Answered,Proactive Response Rate [%],Reactive Received,Reactive Answered,Reactive Response Rate [%],Total Chat Length [sec],Average Chat Length[sec]{Environment.NewLine}";
+
+                lines += data.Aggregate(string.Empty, 
+                    (c, n) => c += $"{n.ID},{n.Name},{n.ProactiveSent},{n.ProactiveAnswered},{n.ProactiveResponseRate},{n.ReactiveReceived},{n.ReactiveAnswered},{n.ReactiveResponseRate},{n.TotalChatLengthSeconds},{n.AverageChatLengthSeconds}{Environment.NewLine}");
+
+                result = File(Encoding.UTF8.GetBytes(lines), "text/csv", "ProductivityReport.csv");
             }
 
             return result;
