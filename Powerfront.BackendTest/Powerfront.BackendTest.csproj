@@ -305,7 +305,6 @@
     <Content Include="Scripts\popper-utils.js.map" />
     <Content Include="Views\Operator\ProductivityReport.cshtml" />
     <Content Include="Views\Operator\ProductivityReportTable.cshtml" />
-    <Content Include="Views\Operator\_ProductivityReportFilter.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

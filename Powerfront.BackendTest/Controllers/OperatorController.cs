@@ -1,4 +1,4 @@
-﻿using Powerfront.BackendTest;
+﻿using Newtonsoft.Json;
 using Powerfront.BackendTest.Models;
 using System;
 using System.Collections.Generic;
@@ -6,11 +6,9 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
-using System.IO;
-using System.Web.Mvc;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
+using System.Web.Mvc;
 
 namespace Powerfront.BackendTest.Controllers
 {
